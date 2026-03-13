@@ -1,0 +1,8 @@
+
+services:
+  pipeline:
+    build: .
+    container_name: e-hailing_pipeline
+    volumes:
+    - ./pipeline:/pipeline
+    command: python3 main.py

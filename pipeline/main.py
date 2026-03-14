@@ -3,9 +3,19 @@ import pandas as pd
 
 """The Bronze Stage"""
 
-def extract():
-    """Extract weather updates from an API from Open Mateo"""
+def dataIngestion():
+    """Ingesting the Uber Dataset"""
 
+    try:
+        df = pd.read_csv("uber_trips_dataset_50k.csv")
+        print(df.head())
+        return df
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+def transform(file):
     url = (
         "https://historical-forecast-api.open-meteo.com/v1/forecast"
         "?latitude=-26.20227"

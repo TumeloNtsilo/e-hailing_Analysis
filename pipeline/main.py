@@ -32,6 +32,7 @@ def transform_csv(df_file):
     df_file['pickup_lat'] = df_file['pickup_lat'].round(2)
     df_file['pickup_lng'] = df_file['pickup_lng'].round(2)
     df_file['pickup_time'] = pd.to_datetime(df_file['pickup_time'])
+    df_file['date'] = df_file['pickup_time'].dt.date
 
     new_df = df_file.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
 
@@ -39,6 +40,13 @@ def transform_csv(df_file):
 
     print(new_df.head())
     return new_df
+
+def weather_request(df):
+
+    weather_points = df[['pickup_lat', 'pickup_lng', 'date']].drop_duplicates()
+
+    print(weather_points.head())
+    return weather_points
 
    
     # try:
@@ -58,4 +66,4 @@ def transform_csv(df_file):
         
 
 if __name__ ==  "__main__":
-  print(transform(dataIngestion()))
+  print(weather_request(transform_csv(dataIngestion())))

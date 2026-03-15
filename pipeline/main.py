@@ -14,56 +14,68 @@ def dataIngestion():
         print(f"Error: {e}")
         return None
     
-def transform_csv(df_file):
+def transform_csv(df):
 
-    # url = (
-    #     "https://historical-forecast-api.open-meteo.com/v1/forecast"
-    #     "?latitude=-26.20227"
-    #     "&longitude=28.04363"
-    #     "&start_date=2026-02-25"
-    #     "&end_date=2026-03-11"
-    #     "&hourly=temperature_2m,apparent_temperature,precipitation,"
-    #     "precipitation_probability,weathercode,cloud_cover,wind_speed_10m,"
-    #     "relative_humidity_2m,is_day"
-    #     "&timezone=Africa/Johannesburg"
-    # )
-    
+    df['pickup_lat'] = df['pickup_lat'].round(2)
+    df['pickup_lng'] = df['pickup_lng'].round(2)
+    df['pickup_time'] = pd.to_datetime(df['pickup_time'])
+    df['date'] = df['pickup_time'].dt.date
 
-    df_file['pickup_lat'] = df_file['pickup_lat'].round(2)
-    df_file['pickup_lng'] = df_file['pickup_lng'].round(2)
-    df_file['pickup_time'] = pd.to_datetime(df_file['pickup_time'])
-    df_file['date'] = df_file['pickup_time'].dt.date
-
-    new_df = df_file.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
-
-
+    new_df = df.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
 
     print(new_df.head())
     return new_df
 
-def weather_request(df):
+def weather_request(new_df):
 
-    weather_points = df[['pickup_lat', 'pickup_lng', 'date']].drop_duplicates()
+    weather_points = new_df[['pickup_lat', 'pickup_lng', 'date']].drop_duplicates()
 
     print(weather_points.head())
     return weather_points
 
-   
-    # try:
-    #     response = requests.get(url, timeout=15)
-    #     response.raise_for_status()
+def get_weather_data(points):
 
-       
-    #     data = response.json()
-    #     weather_results = data["hourly"]
+    weather_data = []
 
-    #     df = pd.DataFrame(weather_results)
-    #     return df
+    for index, row in points.iterrows():
+        lat = row['pickup_lat']
+        lng = row['pickup_lng']
+        date = row['date']
         
-    # except requests.exceptions.RequestException as e:
-    #     print(f"Request error: {e}")
-    #     return
+        url = (
+            f"https://historical-forecast-api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}"
+            f"&longitude={lng}"
+            f"&start_date={date}"
+            f"&end_date={date}"
+            f"&daily=temperature_2m,apparent_temperature,precipitation,"
+            f"precipitation_probability,weathercode,cloud_cover,wind_speed_10m,"
+            f"relative_humidity_2m,is_day"
+            f"&timezone=auto"
+        )
+
         
+        response = requests.get(url, timeout=15)
+    
+        data = response.json()
+
+        weather_data.append({
+            'pickup_lat' : lat,
+            'pickup_lng': lng,
+            'date' : date,
+            'temperature': data['daily']['temperature_2m_max'][0],
+            'precipitation': data['daily']['precipitation_sum'][0]
+        })
+            
+        
+
+    weather_data = pd.DataFrame(weather_data)
+    return weather_data
+
+
 
 if __name__ ==  "__main__":
-  print(weather_request(transform_csv(dataIngestion())))
+  df = dataIngestion()
+  new_df = transform_csv(df)
+#   points = weather_request(new_df)
+#   get_weather_data(points)

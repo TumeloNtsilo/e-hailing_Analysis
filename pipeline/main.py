@@ -15,14 +15,15 @@ def dataIngestion():
         return None
     
 def transform_csv(df):
-
+    
     df['pickup_lat'] = df['pickup_lat'].round(2)
     df['pickup_lng'] = df['pickup_lng'].round(2)
     df['pickup_time'] = pd.to_datetime(df['pickup_time'])
     df['date'] = df['pickup_time'].dt.date
 
     new_df = df.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
-    new_df = df.head(100)
+    new_df = new_df.head(100)
+    print(new_df.head())
    
     return new_df
 
@@ -74,12 +75,16 @@ def get_weather_data(points):
     print(weather_data.head())
     return weather_data
 
-
-
+def merge_data(df, weather_data):
+    df_merged = pd.merge(df, weather_data, on=["pickup_lat", "pickup_lng", "date"], how="left")
+    print(df_merged.head())
+    return df_merged
 
 
 if __name__ ==  "__main__":
   df = dataIngestion()
   new_df = transform_csv(df)
   points = weather_request(new_df)
-  get_weather_data(points)
+  weather_data = get_weather_data(points)
+  df_merged = merge_data(new_df, weather_data)
+

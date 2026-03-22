@@ -22,8 +22,8 @@ def transform_csv(df):
     df['date'] = df['pickup_time'].dt.date
 
     new_df = df.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
-
-    print(new_df.head())
+    new_df = df.head(100)
+   
     return new_df
 
 def weather_request(new_df):
@@ -48,34 +48,38 @@ def get_weather_data(points):
             f"&longitude={lng}"
             f"&start_date={date}"
             f"&end_date={date}"
-            f"&daily=temperature_2m,apparent_temperature,precipitation,"
-            f"precipitation_probability,weathercode,cloud_cover,wind_speed_10m,"
-            f"relative_humidity_2m,is_day"
-            f"&timezone=auto"
+            f"&daily=weather_code,temperature_2m_max,rain_sum,snowfall_sum,"
+            f"precipitation_sum&timezone=auto"
         )
 
-        
-        response = requests.get(url, timeout=15)
-    
-        data = response.json()
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
 
-        weather_data.append({
-            'pickup_lat' : lat,
-            'pickup_lng': lng,
-            'date' : date,
-            'temperature': data['daily']['temperature_2m_max'][0],
-            'precipitation': data['daily']['precipitation_sum'][0]
-        })
+            weather_data.append({
+                'pickup_lat' : lat,
+                'pickup_lng': lng,
+                'date' : date,
+                'temperature': data['daily']['temperature_2m_max'][0],
+                'precipitation': data['daily']['precipitation_sum'][0]
+            })
+
+        except requests.exceptions as e:
+            print(f"Error for {lat}, {lng, {date}}: {e}")
             
         
 
     weather_data = pd.DataFrame(weather_data)
+    print(weather_data.head())
     return weather_data
+
+
 
 
 
 if __name__ ==  "__main__":
   df = dataIngestion()
   new_df = transform_csv(df)
-#   points = weather_request(new_df)
-#   get_weather_data(points)
+  points = weather_request(new_df)
+  get_weather_data(points)

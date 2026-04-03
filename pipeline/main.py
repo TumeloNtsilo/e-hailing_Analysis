@@ -16,12 +16,13 @@ def dataIngestion():
     
 def transform_csv(df):
     
+    df = df.drop_duplicates().dropna(subset=['pickup_lat', 'pickup_lng', 'distance_km','fare_amount'])
     df['pickup_lat'] = df['pickup_lat'].round(2)
     df['pickup_lng'] = df['pickup_lng'].round(2)
     df['pickup_time'] = pd.to_datetime(df['pickup_time'])
     df['date'] = df['pickup_time'].dt.date
 
-    new_df = df.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng'], axis=1)
+    new_df = df.drop(['driver_id', 'rider_id', 'drop_lat', 'drop_lng', 'pickup_time', 'drop_time'], axis=1)
     new_df = new_df.head(100)
     print(new_df.head())
    
@@ -66,11 +67,10 @@ def get_weather_data(points):
                 'precipitation': data['daily']['precipitation_sum'][0]
             })
 
-        except requests.exceptions as e:
+        except requests.RequestException as e:
             print(f"Error for {lat}, {lng, {date}}: {e}")
             
         
-
     weather_data = pd.DataFrame(weather_data)
     print(weather_data.head())
     return weather_data
@@ -87,4 +87,5 @@ if __name__ ==  "__main__":
   points = weather_request(new_df)
   weather_data = get_weather_data(points)
   df_merged = merge_data(new_df, weather_data)
+
 
